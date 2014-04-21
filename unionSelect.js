@@ -6,6 +6,7 @@
    * @param {[Object]} options 参数对象
    * @param {[String]} options.url 获取数据的服务
    * @param {[Array|String]} options.selectArr select数组或取得select数组的选择器
+   * @param {[String]} [options.noLimitText="不限"] select在不选择任何选项时的文本
    * @param {[String]} options.param url服务的参数名称，默认为"id"
    * @param {[Function]} options.callback 选完select选项后的回调，主要是根据选中的数据做业务处理
    * @param {[Function]} options.dataCallback 取完select数据后的回调函数，主要是根据请求回来的数据处理下一级联动select
@@ -46,6 +47,7 @@
     _this.url = options.url;
     _this.$selectArr = $(options.selectArr);
     _this.param = options.param || "id";
+    _this.noLimitText = options.noLimitText || "不限";
     _this.callback = options.callback || function() {};
     _this.dataCallback = options.dataCallback || function() {};
 
@@ -99,6 +101,19 @@
         });
       }
     },
+    resetSelect: function(select){ // 将select设成请选择
+      var _this = this;
+      var $select = $(select);
+      if($select.length > 1){
+        $select.each(function(){  // 清空select里面的options
+          this.options.length = 0;
+          this.options[0] = new Option(_this.noLimitText, "");
+        });
+      } else {
+        $select[0].options.length = 0;
+        $select[0].options[0] = new Option(_this.noLimitText, "");
+      }
+    },
     changeSelect: function() {
       var _this = this;
       _this.$selectArr.change(function() {
@@ -118,14 +133,23 @@
         }
 
         // 根据当前选中数据，处理下一级联动select
-        var params = {};
+        var params = {}, nextArr = [];
         params[_this.param] = val;
-
-        // 请求下一级数据
-        $.getJSON(_this.url, params, function(json) {
-          // 返回数据后，执行回调，对数据进行处理
-          _this.dataCallback.call(_this, json, $nextLevel);
-        }, 'json');
+        
+        if(!val || val == '0'){   // 选了请选择或不限，把下面的select全设成不限
+          _this.$selectArr.each(function(){
+            if(parseInt($(this).attr('level'), 10) >= level){
+              nextArr.push(this);
+            }
+          });
+          _this.resetSelect(nextArr);
+        } else {
+          // 请求下一级数据
+          $.getJSON(_this.url, params, function(json) {
+            // 返回数据后，执行回调，对数据进行处理
+            _this.dataCallback.call(_this, json, $nextLevel);
+          }, 'json');
+        }
       });
     },
     console: function(msg) { // 输出错误信息到错误控制台
