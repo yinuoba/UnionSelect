@@ -103,19 +103,19 @@
       var _this = this;
       _this.$selectArr.change(function() {
         var $this = $(this);
-
         // 找出下一级select
         var level = parseInt($this.attr('level'), 10) + 1;
         var $nextLevel = _this.$selectArr.filter('[level="' + level + '"]');
-        if (!$nextLevel.length) {
-          _this.console('已经是最后一级了！');
-          return false;
-        }
 
         var val = $this.val();
 
         // 选择后执行回调，处理当前选中的数据
         _this.callback.call(_this, $this, val);
+
+        if (!$nextLevel.length) {
+          _this.console('已经是最后一级了！');
+          return false;
+        }
 
         // 根据当前选中数据，处理下一级联动select
         var params = {};
